@@ -1,11 +1,16 @@
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import AppRouter from "./routes/AppRouter";
 
-function App() {
-
+const App = () => {
   return (
-    <>
-      <p className="w-full h-full bg-blue-400 text-center font-extrabold text-3xl text-white">Hello world</p>
-    </>
-  )
+    <div className="w-dvw h-dvh box-content m-0 p-0">
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRouter/>
+        </AuthProvider>  
+      </BrowserRouter>
+    </div>
+  );
 }
-
-export default App
+export default App;
