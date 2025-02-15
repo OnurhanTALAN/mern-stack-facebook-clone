@@ -1,8 +1,8 @@
+import { SEVEN_DAYS } from "../../../common/date.utils.js";
+import { isValidEmail, isValidPassword } from "../../../common/regex.js";
 import RefreshToken from "../models/refreshToken.model.js";
 import User from "../models/user.model.js";
 import { generateAccessToken, generateRefreshToken, verifyToken } from "../utils/auth.utils.js";
-import { SEVEN_DAYS } from "../utils/date.utils.js";
-import { isValidEmail } from "../utils/regex.js";
 
 
 export const register = async (req, res) => {
@@ -30,7 +30,7 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
     
     if(!email || !password) return res.status(400).json({ message : 'Email and password is required!'});
-    if(!isValidEmail(email) || password.length < 6) return res.status(401).json({ success : false, message : 'Invalid email or password format!'})
+    if(!isValidEmail(email) || !isValidPassword) return res.status(401).json({ success : false, message : 'Invalid email or password format!'})
 
     try{
         const user = await User.findOne({ email });

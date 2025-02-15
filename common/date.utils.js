@@ -38,3 +38,5 @@ export const isAllowedToRegister = (dateOfBirth) => {
   
     return age >= ALLOWED_AGE;
 }
+
+export const  SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;

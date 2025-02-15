@@ -3,7 +3,7 @@ import FacebookLogo from "../assets/facebook-logo.svg";
 import { TextInput } from "../components/TextInput";
 import { useState } from "react";
 import { PasswordInput } from "../components/PasswordInput";
-import { isValidMail, isValidPassword } from "../utils/regex";
+import { isValidEmail, isValidPassword } from "../../../common/regex.js";
 
 const LoginPage = () => {
     const [email, setEmail] = useState('');
@@ -18,7 +18,7 @@ const LoginPage = () => {
         e.preventDefault();
         setLoginError('');
         let hasError = false;
-        if(!isValidMail(email)) { setEmailError(true), hasError=true }
+        if(!isValidEmail(email)) { setEmailError(true), hasError=true }
         if(!isValidPassword(password)) { setPasswordError(true), hasError=true }
         if(hasError) {
             setLoginError('Invalid credentials');
@@ -94,8 +94,8 @@ const LoginPage = () => {
               </button>
             </div>
           </div>
-          <p class="mt-4 text-sm text-center">
-            <span class="font-bold cursor-pointer hover:underline">
+          <p className="mt-4 text-sm text-center">
+            <span className="font-bold cursor-pointer hover:underline">
               <Link to={'/construction'}>
                 Create a Page
               </Link>

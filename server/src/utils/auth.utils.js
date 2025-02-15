@@ -1,7 +1,7 @@
 import RefreshToken from "../models/refreshToken.model.js";
 import User from "../models/user.model.js"
 import jwt from 'jsonwebtoken';
-import { SEVEN_DAYS } from "./date.utils.js";
+import { SEVEN_DAYS } from "../../../common/date.utils.js";
 
 
 export const generateAccessToken = async (userID) => {

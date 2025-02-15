@@ -1,38 +1,42 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-
-const credentialRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const restrictedUsernames = ['admin', 'root', 'test', 'user', 'guest'];
-
+import { isValidEmail, isValidName, isValidPassword } from '../../../common/regex.js';
 
 const UserSchema = new mongoose.Schema({
-  // username : {
-  //   type : String,
-  //   required : [true, 'Username is required'],
-  //   unique : true,
-  //   trim : true,
-  //   minLength : [6, 'Username must be at least 6 characters long'],
-  //   maxLength : [20, 'Username can be at most 20 characters long'],
-  //   match: [/^\S*$/, 'Username cannot contain spaces'],
-  //   validate : [
-  //     {
-  //       validator : (value) => { return credentialRegex.test(value); },
-  //       message : 'Username must contain at least one uppercase letter, one lowercase letter, one digit, and one special character',
-  //     },
-  //     {
-  //       validator: (value) => !restrictedUsernames.includes(value.toLowerCase()),
-  //       message: 'This username is not allowed. Please choose a different one.',
-  //     },  
-  //   ] 
-  // },
+  firstName : {
+    type : String,
+    required : true,
+    trim : true,
+    validate : [
+      {
+        validator : (value) => { return isValidName(value) },
+        message : 'First name must be between 3-20 characters long and must only contain letters.'
+      },
+    ]
+  },
+  surName : {
+    type : String,
+    required : true,
+    trim : true,
+    validate : [
+      {
+        validator : (value) => { return isValidName(value) },
+        message : 'Surname must be between 3-20 characters long and must only contain letters.'
+      },
+    ]
+  },
+  gender : {
+    type : String,
+    enum : ['MALE', 'FEMALE', 'OTHER'],
+    required : true
+  },
   email: { 
     type: String,
     required: true,
     unique: true,
     trim : true,
     validate : {
-      validator : (value) => { return emailRegex.test(value); },
+      validator : (value) => { return isValidEmail(value) },
       message : 'Non valid email!'
     }
   },
@@ -44,8 +48,8 @@ const UserSchema = new mongoose.Schema({
     maxLength : [20, 'Password can be at most 20 characters long'],
     match: [/^\S*$/, 'Password cannot contain spaces'],
     validate : {
-        validator : (value) => { return credentialRegex.test(value); },
-        message : 'Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character',
+        validator : (value) => { return isValidPassword(value) },
+        message : 'Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (._!@#)',
       }
   },
   role: {
@@ -67,12 +71,12 @@ const UserSchema = new mongoose.Schema({
     type : Number,
     default : 0,
   }
-});
+},{timestamps : true});
 
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) { return next(); }
     try {
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(process.env.BCRYPT_SALT_ROUNDS || 10);
       this.password = await bcrypt.hash(this.password, salt);
       next();
     } catch (error) {

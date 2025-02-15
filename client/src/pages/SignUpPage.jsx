@@ -6,11 +6,11 @@ import { PasswordInput } from "../components/PasswordInput"
 import { SelectInput } from "../components/SelectInput"
 import { RedWarningCircle } from "../assets/icons/RedWarning"
 
-import { CURRENT_YEAR, getMonthLength, isAllowedToRegister, MONTHS } from "../utils/date.utils"
-import { GENDER } from "../utils/genders.util"
+import { CURRENT_YEAR, getMonthLength, isAllowedToRegister, MONTHS } from "../../../common/date.utils.js"
+import { GENDER } from "../../../common/gender.utils.js"
 
 import FacebookLogo from "../assets/facebook-logo.svg"
-import { isValidMail, isValidPassword, isValidName } from "../utils/regex"
+import { isValidEmail, isValidPassword, isValidName } from "../../../common/regex.js"
 
 const SignUpPage = () => {
     const [firstName, setFirstName] = useState('');
@@ -49,7 +49,7 @@ const SignUpPage = () => {
         if(!isAllowedToRegister(new Date(birthY, birthM - 1, birthD))) {setBirthDateError(true), hasError = true}
 
         if(!gender) {setGenderError(true), hasError = true}
-        if(!isValidMail(email)) {setEmailError(true), hasError = true}
+        if(!isValidEmail(email)) {setEmailError(true), hasError = true}
         if(!isValidPassword(password)) {setPasswordError(true), hasError = true}
 
         if(hasError) return;
@@ -135,7 +135,7 @@ const SignUpPage = () => {
                                 <RedWarningCircle />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             {Object.values(GENDER).map((genderOption) => (
                                 <label key={genderOption} className={`flex items-center justify-between px-3 py-2 border rounded-md ${genderError && 'border-red-500'}`}>
                                     <span className="text-sm">{genderOption}</span>
