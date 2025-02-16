@@ -1,17 +1,26 @@
-import User from "../models/user.model.js";
-import { verifyToken } from "../utils/auth.utils.js";
+import { verifyAccessToken, isTokenBlackListed } from "../utils/auth.utils.js";
 
-export const authorizeToken = async (req, res, next) => {
-    const authHeader = req.header('Authorization');
-    if(!authHeader.startsWith('Bearer ')) return res.status(401).json({ message : 'No token provided.'});
-    const providedToken = authHeader.split(' ')[1];
+export const authenticateToken = async (req, res, next) => {
     try{
-        const decodedUser = await verifyToken(providedToken);
-        const user = await User.findById(decodedUser.userID).select('-password');
-        if(decodedUser.tokenVersion !== user.tokenVersion) { return res.status(403).json({ message : 'Old access token.' })}
-        req.user = user;
+        const authHeader = req.header('Authorization');
+        if(!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ message : 'No token provided.'});
+
+        const providedToken = authHeader.split(' ')[1];
+        
+        const isBlackListed = await isTokenBlackListed(providedToken);
+        if(isBlackListed) { return res.status(401).json({ success : false, message : 'Token has been invalidated.' })}
+
+        const decodedUser = await verifyAccessToken(providedToken);
+        req.user = decodedUser;
         next();
     }catch(error){
-        res.status(400).json({ message : 'Invalid token' });
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({ message: 'Invalid token' });
+        }
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Token expired' });
+        }
+        console.error('Token verification error:', error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
 }

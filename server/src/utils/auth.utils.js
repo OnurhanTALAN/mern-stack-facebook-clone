@@ -1,53 +1,64 @@
-import RefreshToken from "../models/refreshToken.model.js";
-import User from "../models/user.model.js"
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import redis from "../config/redis.js";
+import crypto from 'crypto';
 import { SEVEN_DAYS } from "../../../common/date.utils.js";
 
-
-export const generateAccessToken = async (userID) => {
-    const user = await User.findByIdAndUpdate(
-        userID,
-        { $inc : { tokenVersion : 1 } },
-        { new : true}
-    );
-    return jwt.sign(
-        {
-            userID: user._id,
-            email: user.email,
-            role: user.role,
-            tokenVersion : user.tokenVersion,
-        },
-        process.env.JWT_ACCESS_SECRET,
-        { expiresIn : '15m'}
-    );
+export const generateAccessToken = (userID) => {
+  return jwt.sign(
+    { userID },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: "15m" }
+  );
 }
 
-export const generateRefreshToken = async (userID) => {
-    await RefreshToken.deleteMany({ userID : userID});
-
-    const user = await User.findById(userID);
-    const refreshToken = jwt.sign(
-        {
-            userID: user._id,
-            email: user.email,
-            role: user.role,
-            tokenVersion : user.tokenVersion,
-        },
-        process.env.JWT_REFRESH_SECRET,
-        { expiresIn : '7d'}
-    );
-    await RefreshToken.create({
-        token : refreshToken,
-        userID : userID,
-        expiresAt : new Date(Date.now() + SEVEN_DAYS)
-    });
-    return refreshToken;
+export const generateRefreshToken = () => {
+  const refreshToken = crypto.randomBytes(40).toString('hex');
+  return refreshToken;
 }
 
-export const verifyToken = (token, secretType = 'ACCESS') => {
-    return new Promise((resolve, reject) => {
-        jwt.verify(token, secretType === 'ACCESS' ? process.env.JWT_ACCESS_SECRET : process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-            err ? reject(err) : resolve(decoded)
-        })
-    });
+export const storeRefreshToken = async (userID, refreshToken) => {
+  const key = `refresh_${refreshToken}`;
+  await redis.set(key, userID, 'EX', SEVEN_DAYS / 1000);
+}
+
+export const verifyRefreshToken = async (refreshToken) => {
+  const key = `refresh_${refreshToken}`;
+  const userId = await redis.get(key);
+  return userId;
+}
+
+export const revokeRefreshToken = async (refreshToken) => {
+  const key = `refresh_${refreshToken}`;
+  await redis.del(key);
+}
+
+export const verifyAccessToken = (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(
+      token,
+      process.env.JWT_ACCESS_SECRET,
+      (err, decoded) => {
+        err ? reject(err) : resolve(decoded);
+      }
+    );
+  });
+}
+
+export const blacklistToken = async (token, expirationTime) => {
+  try{
+    await redis.set(`bl_${token}`, 'true', 'EX', expirationTime);
+    return true;
+  }catch(error){
+    console.log('Error blacklisting token : ', error);
+    return false;
+  }
+}
+
+export const isTokenBlackListed = async (token) => {
+  try{
+    return await redis.get(`bl_${token}`);
+  }catch(error){
+    console.log('Error checking blacklisted token : ', error);
+    return true;
+  }
 }
